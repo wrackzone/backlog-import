@@ -37,24 +37,9 @@ def clear_project(project_name)
 
 end
 
-def find_object_query(type,query)
-	object_query = RallyAPI::RallyQuery.new()
-	object_query.type = type
-	object_query.fetch = "Name,ObjectID,FormattedID,Parent"
-	object_query.project_scope_up = false
-	object_query.project_scope_down = true
-	object_query.order = "Name Asc"
-	object_query.query_string = query
-	results = @rally.find(object_query)
-	
-	results.each do |obj|
-		return obj if (obj.Name.eql?(name))
-	end
-	nil
-end
-
 def parse_row(row)
-    
+
+    # check for tags    
     if row["Tags"] && row["Tags"] != ""
         print "looking for tag:#{row['Tags']}\n"
         tags = find_object(:tag,row["Tags"])
@@ -65,16 +50,16 @@ def parse_row(row)
     fields["StoryID"] = row["StoryID"]
     fields["ScheduleState"] = "Initial"
     fields["Name"] = row["Name"]
-    fields["Project"] = find_object(:project,row["Project Team"])
     fields["ProductCategory"] = row["Category"]
     fields["ProductSubCategory"] = row["Sub-Category"]
     fields["Description"] = row["Description"]
     fields["Notes"] = row["Notes"]
     fields["PlanEstimate"] = row["StoryPoints"]
+    fields["ALMQCID"] = row["ALM_ID"]
+    fields["Project"] = find_object(:project,row["Project Team"])
     if (row["Release"] && row["Release"] != "")
         fields["Release"] = find_object(:release,row["Release"]) 
     end
-    fields["ALMQCID"] = row["ALM_ID"]
     
     type = (row["Type"] == "defect" ? "defect" : "story")
     
@@ -124,20 +109,14 @@ config[:headers]    = headers #from RallyAPI::CustomHttpHeader.new()
 
 pp @workspace
 
-pp find_object(:project,"TOA")
-
-file=File.open('backlog (2).csv', "r:ISO-8859-1")
+file=File.open('backlog.csv', "r:ISO-8859-1")
 input = CSV.parse(file)
 header = input.first #header row
 
 rows = []
 #(1...input.size).each { |i| rows << CSV::Row.new(header, input[i]) }
-
+# reverse to import in rank order
 (1...input.size).to_a.reverse.each { |i| rows << CSV::Row.new(header, input[i]) }
-
-clear_project("TOA")
-clear_project("MWF IT")
-clear_project("MWF Steering")
 
 rows.each { |row| parse_row(row) }
 
