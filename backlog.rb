@@ -141,7 +141,4 @@ clear_project("MWF Steering")
 
 rows.each { |row| parse_row(row) }
 
-# clear_project("TOA")
-# clear_project("MWF IT")
-# clear_project("MWF Steering")
-# clear_project("Mobile Workforce Team")
+# clear_project()
